@@ -50,7 +50,7 @@ public class DashboardView extends BorderPane {
 
         artifactBtn.setOnAction (e -> {
             this.setCenter(artifactView);
-            artifactView.refreshAfrtifactView();
+            artifactView.refreshArtifactView();
         });
         wizardBtn.setOnAction(e -> this.setCenter(wizardView));
 

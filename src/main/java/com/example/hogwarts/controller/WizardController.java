@@ -38,7 +38,7 @@ public class WizardController {
 
     public List<Artifact> getUnassignedArtifacts() {
         return this.store.findAllArtifacts().stream()
-                .filter(a -> a.getOwner() == null)
-                .collect(Collectors.toList());
+                .filter(a -> a.getOwner() == null || a.getOwner().getName().equals("--"))
+                .collect(Collectors.toList());//idk
     }
 }

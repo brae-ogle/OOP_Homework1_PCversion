@@ -32,6 +32,10 @@ public class Artifact {
     public void setDescription(String description) {
         this.description = Objects.requireNonNullElse(description, "description must not be null");
     }
+    public void unassignOwner() {
+        this.owner = null;
+    }
+
     void setOwner(Wizard owner) {
         this.owner = owner; } // package-private to restrict access
 

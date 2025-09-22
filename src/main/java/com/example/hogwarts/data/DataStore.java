@@ -111,6 +111,16 @@ public class DataStore {
         return true;
     }
 
+    //Unassign artifact from its owner wizard
+    public boolean unassignArtifactFromWizard(int artifactId) {
+        Artifact artifact = this.artifacts.get(artifactId);
+        if (artifact == null || artifact.getOwner() == null) return false;
+        Wizard owner = artifact.getOwner();
+        owner.removeArtifact(artifact);
+        return true;
+    }
+
+
     public User getCurrentUser() {
         return currentUser;
     }

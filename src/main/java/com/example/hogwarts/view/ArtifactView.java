@@ -10,20 +10,26 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.collections.transformation.FilteredList;
 
 public class ArtifactView extends VBox{
     private final ArtifactController controller;
     private final TableView<Artifact> artifactTable;
     private final ObservableList<Artifact> artifactData;
+    FilteredList<Artifact> filteredData;
+    TextField searchBar;
 
     public ArtifactView() {
         this.controller = new ArtifactController();
         this.artifactTable = new TableView<>();
         this.artifactData = FXCollections.observableArrayList(controller.findAllArtifacts());
+        this.filteredData = new FilteredList<>(artifactData, p -> true);
+        artifactTable.setItems(filteredData); // Set the filtered list as the items for the table
+        this.searchBar = createSearchBar(filteredData);
 
         setSpacing(10);
         setPadding(new Insets(10));
-        getChildren().addAll(createTable(), createButtons());
+        getChildren().addAll(searchBar, createTable(), createButtons());
     }
 
     private TableView<Artifact> createTable() {
@@ -71,14 +77,15 @@ public class ArtifactView extends VBox{
                     });
                 });
                 unassignButton.setOnAction(e -> {
-                    //Only allow the buttom to be click if the artifact has an owner
+                    //Only allow the button to be clicked if the artifact has an owner
                     Artifact artifact = getTableView().getItems().get(getIndex());
                     if (artifact.getOwner() != null) {
                         controller.unassignArtifactOwner(artifact.getId());
-                        refreshAfrtifactView();
+                        refreshArtifactView();
                     }
                 });
             }
+
 
             @Override
             protected void updateItem(Void item, boolean empty) {
@@ -98,10 +105,27 @@ public class ArtifactView extends VBox{
         });
 
         artifactTable.getColumns().setAll(idCol, nameCol, ownerCol, actionCol);
-        artifactTable.setItems(artifactData);
+        //No longer needed as we use filtered list
+        //artifactTable.setItems(artifactData);
         artifactTable.setPrefHeight(300);
         return artifactTable;
     }
+
+    private TextField createSearchBar(FilteredList<Artifact> filteredData) {
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search by name...");
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            String filter = newVal.toLowerCase();
+            filteredData.setPredicate(artifact -> {
+                if (filter.isEmpty()) return true;
+                return artifact.getName().toLowerCase().contains(filter);
+            });
+        });
+
+        return searchField;
+    }
+
 
     private HBox createButtons() {
         Button addBtn = new Button("Add");
@@ -138,7 +162,7 @@ public class ArtifactView extends VBox{
             artifactData.setAll(controller.findAllArtifacts());
             artifactTable.getSelectionModel().select(artifact);
         });
-        refreshAfrtifactView();
+        refreshArtifactView();
     }
 
     private void showEditArtifactDialog(Artifact artifact) {
@@ -164,7 +188,7 @@ public class ArtifactView extends VBox{
             }
             return null;
         });
-        refreshAfrtifactView();
+        refreshArtifactView();
         dialog.showAndWait();
     }
 
@@ -190,11 +214,11 @@ public class ArtifactView extends VBox{
 
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        refreshAfrtifactView();
+        refreshArtifactView();
         dialog.showAndWait();
     }
 
-    public void refreshAfrtifactView() {
+    public void refreshArtifactView() {
         artifactTable.refresh();
     }
 }
