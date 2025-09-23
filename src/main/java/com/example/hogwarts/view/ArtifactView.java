@@ -7,6 +7,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -23,8 +24,10 @@ public class ArtifactView extends VBox{
         this.controller = new ArtifactController();
         this.artifactTable = new TableView<>();
         this.artifactData = FXCollections.observableArrayList(controller.findAllArtifacts());
-        this.filteredData = new FilteredList<>(artifactData, p -> true);
-        artifactTable.setItems(filteredData); // Set the filtered list as the items for the table
+        this.filteredData = new FilteredList<>(artifactData, p -> true); //Allow filtering (via search bar)
+        SortedList<Artifact> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(artifactTable.comparatorProperty()); //Allows sorting by clicking column headers
+        artifactTable.setItems(sortedData);
         this.searchBar = createSearchBar(filteredData);
 
         setSpacing(10);
@@ -39,11 +42,9 @@ public class ArtifactView extends VBox{
         TableColumn<Artifact, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getName()));
 
-        TableColumn<Artifact, String> ownerCol = new TableColumn<>("Owner");
-        ownerCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getOwner().getName()));
+        TableColumn<Artifact, String> ownerCol = createOwnerColumn();
 
         TableColumn<Artifact, Void> actionCol = new TableColumn<>("Actions");
-
         actionCol.setCellFactory(col -> new TableCell<>() {
             private final Button viewButton = new Button("View");
             private final Button editButton = new Button("Edit");
@@ -77,12 +78,20 @@ public class ArtifactView extends VBox{
                     });
                 });
                 unassignButton.setOnAction(e -> {
-                    //Only allow the button to be clicked if the artifact has an owner
                     Artifact artifact = getTableView().getItems().get(getIndex());
-                    if (artifact.getOwner() != null) {
-                        controller.unassignArtifactOwner(artifact.getId());
-                        refreshArtifactView();
-                    }
+                    //Confirmation unassignment
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Confirm Unassignment");
+                    confirm.setHeaderText("Unassign Artifact Owner");
+                    confirm.setContentText("Are you sure you want to unassign the owner of \"" + artifact.getName() + "\"?");
+                    confirm.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.OK) { //Proceed only if confirmed
+                            if (artifact.getOwner() != null) {
+                                controller.unassignArtifactOwner(artifact.getId());
+                                refreshArtifactView();
+                            }
+                        }
+                    });
                 });
             }
 
@@ -135,6 +144,26 @@ public class ArtifactView extends VBox{
             box.getChildren().add(addBtn);
         }
         return box;
+    }
+
+    private TableColumn<Artifact, String> createOwnerColumn() {
+        TableColumn<Artifact, String> ownerCol = new TableColumn<>("Owner");
+
+        // Set cell value (handle null owners)
+        ownerCol.setCellValueFactory(cell -> {
+            String ownerName = cell.getValue().getOwner() != null ? cell.getValue().getOwner().getName() : "";
+            return new ReadOnlyStringWrapper(ownerName);
+        });
+        ownerCol.setSortable(true);
+        ownerCol.setComparator((o1, o2) -> {
+            boolean o1IsDummy = o1 == null || o1.equals("--");
+            boolean o2IsDummy = o2 == null || o2.equals("--");
+            if (o1IsDummy && o2IsDummy) return 0;
+            if (o1IsDummy) return 1; // put o1 after o2
+            if (o2IsDummy) return -1; // put o2 after o1
+            return o1.compareToIgnoreCase(o2);
+        });
+        return ownerCol;
     }
 
     private void showAddArtifactDialog() {
