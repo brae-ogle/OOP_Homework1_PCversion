@@ -18,8 +18,6 @@ public class ArtifactController {
 
     public Artifact addArtifact(String name, String description) {
         Artifact artifact = new Artifact(name, description);
-        History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
-        this.store.addHistoryEntry(artifact.getId(), history);
         return this.store.addArtifact(artifact);
     }
 
@@ -38,8 +36,6 @@ public class ArtifactController {
             throw new NoSuchElementException("Artifact with ID " + id + " not found.");
         }
         artifact.unassignOwner();
-        History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
-        this.store.addHistoryEntry(artifact.getId(), history);
         this.store.unassignArtifactFromWizard(artifact.getId());
     }
 

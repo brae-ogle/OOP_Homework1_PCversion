@@ -3,23 +3,27 @@ package com.example.hogwarts.data;
 import com.example.hogwarts.model.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * TODO: Make this a thread-safe singleton
- * TODO: Use atomic integers for ID generation to avoid race conditions
+ * Thread-safe Singleton DataStore
+ * Uses atomic integers for ID generation
  */
 public class DataStore {
-    private static DataStore instance; // Singleton instance
+    // Volatile ensures visibility across threads
+    private static volatile DataStore instance;
 
-    private final List<User> users = new ArrayList<>();
-    private final Map<Integer, Wizard> wizards = new HashMap<>();
-    private final Map<Integer, Artifact> artifacts = new HashMap<>();
-    private final Map<Integer, List<History>> assignmentLogs = new HashMap<>();
+    private final List<User> users = new CopyOnWriteArrayList<>();
+    private final Map<Integer, Wizard> wizards = new ConcurrentHashMap<>();
+    private final Map<Integer, Artifact> artifacts = new ConcurrentHashMap<>();
+    private final Map<Integer, List<History>> assignmentLogs = new ConcurrentHashMap<>();
 
-    private int wizardIdCounter = 1; // Wizard ID generator
-    private int artifactIdCounter = 1; // Artifact ID generator
+    private final AtomicInteger wizardIdCounter = new AtomicInteger(1);
+    private final AtomicInteger artifactIdCounter = new AtomicInteger(1);
 
-    private User currentUser; // Currently authenticated user
+    private volatile User currentUser; // Guarded with volatile for visibility
 
     private DataStore() {
         // Hardcoded users
@@ -41,9 +45,14 @@ public class DataStore {
         this.assignArtifactToWizard(a2.getId(), w2.getId());
     }
 
+    // Double-checked locking for singleton
     public static DataStore getInstance() {
         if (instance == null) {
-            instance = new DataStore();
+            synchronized (DataStore.class) {
+                if (instance == null) {
+                    instance = new DataStore();
+                }
+            }
         }
         return instance;
     }
@@ -58,7 +67,7 @@ public class DataStore {
 
     // Wizards
     public Wizard addWizard(Wizard wizard) {
-        wizard.setId(wizardIdCounter++);
+        wizard.setId(wizardIdCounter.getAndIncrement());
         this.wizards.put(wizard.getId(), wizard);
         return wizard;
     }
@@ -80,8 +89,10 @@ public class DataStore {
 
     // Artifacts
     public Artifact addArtifact(Artifact artifact) {
-        artifact.setId(artifactIdCounter++);
+        artifact.setId(artifactIdCounter.getAndIncrement());
         this.artifacts.put(artifact.getId(), artifact);
+        History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
+        this.addHistoryEntry(artifact.getId(), history);
         return artifact;
     }
 
@@ -106,23 +117,25 @@ public class DataStore {
         if (artifact == null || wizard == null) return false;
 
         wizard.addArtifact(artifact);
-        //Done for you in Wizard.addArtifact()
-        // artifact.setOwner(wizard);
 
-        // Log the assignment? Or already done in controller?
+        // Log the assignment
+        History history = new History(artifact.getId(), artifact.getName(), wizard.getName(), new Date());
+        this.addHistoryEntry(artifactId, history);
         return true;
     }
 
-    //Unassign artifact from its owner wizard
+    // Unassign artifact from its owner wizard
     public boolean unassignArtifactFromWizard(int artifactId) {
         Artifact artifact = this.artifacts.get(artifactId);
         if (artifact == null || artifact.getOwner() == null) return false;
         Wizard owner = artifact.getOwner();
         owner.removeArtifact(artifact);
+        History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
+        this.addHistoryEntry(artifact.getId(), history);
         return true;
     }
 
-
+    // Current user
     public User getCurrentUser() {
         return currentUser;
     }
@@ -131,15 +144,12 @@ public class DataStore {
         this.currentUser = currentUser;
     }
 
-    //History
+    // History
     public void addHistoryEntry(int artifactID, History history) {
-        this.assignmentLogs.computeIfAbsent(artifactID, k -> new ArrayList<>()).add(history);
+        this.assignmentLogs.computeIfAbsent(artifactID, k -> new CopyOnWriteArrayList<>()).add(history);
     }
 
     public List<History> getHistoryByArtifactId(int artifactId) {
         return assignmentLogs.getOrDefault(artifactId, new ArrayList<>());
     }
-
-
-
 }
