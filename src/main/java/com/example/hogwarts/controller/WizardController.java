@@ -2,9 +2,11 @@ package com.example.hogwarts.controller;
 
 import com.example.hogwarts.data.DataStore;
 import com.example.hogwarts.model.Artifact;
+import com.example.hogwarts.model.History;
 import com.example.hogwarts.model.Wizard;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,9 @@ public class WizardController {
             throw new IllegalArgumentException("Wizard with ID " + id + " not found.");
         }
         wizard.setName(newName);
+        //>?>?>?>?>?>?>
+        // Do i  need to add history for wizard name change?
+        //>?>?>?>?>?>?>
     }
 
     public void deleteWizard(int id) {
@@ -33,6 +38,8 @@ public class WizardController {
     }
 
     public boolean assignArtifactToWizard(Wizard wizard, Artifact artifact) {
+        History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
+        this.store.addHistoryEntry(artifact.getId(), history);
         return this.store.assignArtifactToWizard(artifact.getId(), wizard.getId());
     }
 

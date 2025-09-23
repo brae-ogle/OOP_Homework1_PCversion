@@ -3,6 +3,7 @@ package com.example.hogwarts.view;
 import com.example.hogwarts.controller.ArtifactController;
 import com.example.hogwarts.data.DataStore;
 import com.example.hogwarts.model.Artifact;
+import com.example.hogwarts.model.History;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -50,6 +51,7 @@ public class ArtifactView extends VBox{
             private final Button editButton = new Button("Edit");
             private final Button deleteButton = new Button("Delete");
             private final Button unassignButton = new Button("Unassign");
+            private final Button historyButton = new Button("History");
             private final HBox buttons = new HBox(5);
 
             {
@@ -93,6 +95,11 @@ public class ArtifactView extends VBox{
                         }
                     });
                 });
+
+                historyButton.setOnAction(e -> {
+                    Artifact artifact = getTableView().getItems().get(getIndex());
+                    showArtifactHistoryDialog(artifact);
+                });
             }
 
 
@@ -104,7 +111,7 @@ public class ArtifactView extends VBox{
                 } else {
                     buttons.getChildren().clear();
                     //buttons.getChildren().add(viewButton);
-                    buttons.getChildren().addAll(viewButton, unassignButton);
+                    buttons.getChildren().addAll(viewButton, unassignButton, historyButton);
                     if (DataStore.getInstance().getCurrentUser().isAdmin()) {
                         buttons.getChildren().addAll(editButton, deleteButton);
                     }
@@ -244,6 +251,60 @@ public class ArtifactView extends VBox{
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         refreshArtifactView();
+        dialog.showAndWait();
+    }
+
+    private void showArtifactHistoryDialog(Artifact artifact) {
+        if (artifact == null) return;
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Artifact Assignment History");
+        dialog.setHeaderText("History for: " + artifact.getName());
+
+        // Pull *all* history entries for this artifact
+        ObservableList<History> historyList = FXCollections.observableArrayList(
+                DataStore.getInstance().getHistoryByArtifactId(artifact.getId())
+        );
+
+        TableView<History> historyTable = new TableView<>(historyList);
+
+//        // Wizard column (resolve wizard name from DataStore if available)
+//        TableColumn<History, String> wizardCol = new TableColumn<>("Wizard");
+//        wizardCol.setCellValueFactory(c -> {
+//            int wizardId = c.getValue().getWizardId();
+//            String name = "";
+//            if (wizardId != 0) {
+//                var w = DataStore.getInstance().findWizardById(wizardId);
+//                if (w != null) name = w.getName();
+//            }
+//            return new ReadOnlyStringWrapper(name);
+//        });
+        TableColumn<History, String> wizardCol = new TableColumn<>("Wizard");
+        wizardCol.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getWizardName())
+        );
+
+//        // Action column (ASSIGNED / UNASSIGNED)
+//        TableColumn<History, String> actionCol = new TableColumn<>("Action");
+//        actionCol.setCellValueFactory(c ->
+//                new ReadOnlyStringWrapper(c.getValue().getActionType())
+//        );
+
+        // Timestamp column
+        TableColumn<History, String> timeCol = new TableColumn<>("Timestamp");
+        timeCol.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getTimestamp().toString())
+        );
+
+        //historyTable.getColumns().addAll(wizardCol, actionCol, timeCol);
+        historyTable.getColumns().addAll(wizardCol, timeCol);
+        historyTable.setPrefHeight(300);
+
+        VBox content = new VBox(historyTable);
+        content.setPadding(new Insets(10));
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         dialog.showAndWait();
     }
 

@@ -1,9 +1,6 @@
 package com.example.hogwarts.data;
 
-import com.example.hogwarts.model.Artifact;
-import com.example.hogwarts.model.Wizard;
-import com.example.hogwarts.model.Role;
-import com.example.hogwarts.model.User;
+import com.example.hogwarts.model.*;
 
 import java.util.*;
 
@@ -17,6 +14,7 @@ public class DataStore {
     private final List<User> users = new ArrayList<>();
     private final Map<Integer, Wizard> wizards = new HashMap<>();
     private final Map<Integer, Artifact> artifacts = new HashMap<>();
+    private final Map<Integer, List<History>> assignmentLogs = new HashMap<>();
 
     private int wizardIdCounter = 1; // Wizard ID generator
     private int artifactIdCounter = 1; // Artifact ID generator
@@ -108,6 +106,10 @@ public class DataStore {
         if (artifact == null || wizard == null) return false;
 
         wizard.addArtifact(artifact);
+        //Done for you in Wizard.addArtifact()
+        // artifact.setOwner(wizard);
+
+        // Log the assignment? Or already done in controller?
         return true;
     }
 
@@ -127,6 +129,15 @@ public class DataStore {
 
     public void setCurrentUser(User currentUser) {
         this.currentUser = currentUser;
+    }
+
+    //History
+    public void addHistoryEntry(int artifactID, History history) {
+        this.assignmentLogs.computeIfAbsent(artifactID, k -> new ArrayList<>()).add(history);
+    }
+
+    public List<History> getHistoryByArtifactId(int artifactId) {
+        return assignmentLogs.getOrDefault(artifactId, new ArrayList<>());
     }
 
 
