@@ -7,11 +7,13 @@ public class Artifact {
     private String name;
     private String description;
     private Wizard owner; // can be null
+    private int condition; // 0 (worst) to 100 (best)
 
     public Artifact(String name, String description) {
         this.name = Objects.requireNonNullElse(name, "name must not be null");
         this.description = Objects.requireNonNullElse(description, "description must not be null");
         this.owner = null;
+        this.condition = 100; // default condition
     }
 
     public int getId() { return id; }
@@ -34,6 +36,21 @@ public class Artifact {
     }
     public void unassignOwner() {
         this.owner = null;
+    }
+    public int getCondition() { return condition; }
+    public void setCondition(int condition) {
+        //Bound condition between 0 and 100
+        if (condition < 0) {
+            this.condition = 0;
+        } else if (condition > 100) {
+            this.condition = 100;
+        } else {
+            this.condition = condition;
+        }
+    }
+    public void reduceConditionByFive() {
+        int newCondition = this.getCondition() - 5;
+        this.setCondition(newCondition);
     }
 
     void setOwner(Wizard owner) {

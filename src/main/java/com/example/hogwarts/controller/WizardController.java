@@ -38,6 +38,7 @@ public class WizardController {
     }
 
     public boolean assignArtifactToWizard(Wizard wizard, Artifact artifact) {
+        artifact.reduceConditionByFive();
         History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
         this.store.addHistoryEntry(artifact.getId(), history);
         return this.store.assignArtifactToWizard(artifact.getId(), wizard.getId());

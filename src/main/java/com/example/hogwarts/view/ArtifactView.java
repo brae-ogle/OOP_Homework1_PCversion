@@ -43,6 +43,9 @@ public class ArtifactView extends VBox{
         TableColumn<Artifact, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getName()));
 
+        TableColumn<Artifact, Number> conditionCol = new TableColumn<>("Condition");
+        conditionCol.setCellValueFactory(cell -> new ReadOnlyObjectWrapper(cell.getValue().getCondition()));
+
         TableColumn<Artifact, String> ownerCol = createOwnerColumn();
 
         TableColumn<Artifact, Void> actionCol = new TableColumn<>("Actions");
@@ -52,6 +55,7 @@ public class ArtifactView extends VBox{
             private final Button deleteButton = new Button("Delete");
             private final Button unassignButton = new Button("Unassign");
             private final Button historyButton = new Button("History");
+            private final Button repairButton = new Button("Repair");
             private final HBox buttons = new HBox(5);
 
             {
@@ -100,6 +104,11 @@ public class ArtifactView extends VBox{
                     Artifact artifact = getTableView().getItems().get(getIndex());
                     showArtifactHistoryDialog(artifact);
                 });
+
+                repairButton.setOnAction(e -> {
+                    Artifact artifact = getTableView().getItems().get(getIndex());
+                    showArtifactRepairDialog(artifact);
+                });
             }
 
 
@@ -111,7 +120,7 @@ public class ArtifactView extends VBox{
                 } else {
                     buttons.getChildren().clear();
                     //buttons.getChildren().add(viewButton);
-                    buttons.getChildren().addAll(viewButton, unassignButton, historyButton);
+                    buttons.getChildren().addAll(viewButton, unassignButton, historyButton, repairButton);
                     if (DataStore.getInstance().getCurrentUser().isAdmin()) {
                         buttons.getChildren().addAll(editButton, deleteButton);
                     }
@@ -120,7 +129,7 @@ public class ArtifactView extends VBox{
             }
         });
 
-        artifactTable.getColumns().setAll(idCol, nameCol, ownerCol, actionCol);
+        artifactTable.getColumns().setAll(idCol, nameCol, ownerCol, conditionCol, actionCol);
         //No longer needed as we use filtered list
         //artifactTable.setItems(artifactData);
         artifactTable.setPrefHeight(300);
@@ -307,6 +316,68 @@ public class ArtifactView extends VBox{
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         dialog.showAndWait();
     }
+
+    private void showArtifactRepairDialog(Artifact artifact) {
+        if (artifact == null) return;
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Repair Artifact");
+        dialog.setHeaderText("Repairing: " + artifact.getName());
+
+        // Current condition display
+        Label conditionLabel = new Label("Current Condition: " + artifact.getCondition() + " (0-100)");
+
+        // Warning if condition < 10
+        Label warningLabel = new Label();
+        if (artifact.getCondition() < 10) {
+            warningLabel.setText("⚠ Warning: Artifact condition is critically low!");
+            warningLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        }
+
+        // New condition input
+        TextField newConditionField = new TextField();
+        newConditionField.setPromptText("Enter new condition (0-100)");
+
+        // Restrict to integers only
+        newConditionField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.matches("\\d*")) {
+                newConditionField.setText(newVal.replaceAll("[^\\d]", ""));
+            }
+        });
+
+        VBox content = new VBox(10,
+                conditionLabel,
+                warningLabel,
+                new Label("New Condition:"), newConditionField
+        );
+        content.setPadding(new Insets(10));
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(button -> {
+            if (button == ButtonType.OK) {
+                String newConditionText = newConditionField.getText();
+                if (!newConditionText.isEmpty()) {
+                    int newCondition = Integer.parseInt(newConditionText);
+                    if (newCondition < 0 || newCondition > 100) {
+                        Alert alert = new Alert(Alert.AlertType.ERROR,
+                                "Condition must be between 0 and 100.",
+                                ButtonType.OK);
+                        alert.showAndWait();
+                    } else {
+                        controller.repairArtifactTo(artifact.getId(), newCondition - artifact.getCondition());
+
+                    }
+                }
+            }
+            return null;
+        });
+        dialog.showAndWait();
+        refreshArtifactView();
+    }
+
+
 
     public void refreshArtifactView() {
         artifactTable.refresh();

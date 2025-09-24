@@ -150,11 +150,20 @@ public class WizardView extends VBox{
         dialog.setHeaderText("Assign to " + wizard.getName());
 
         dialog.showAndWait().ifPresent(artifact -> {
-            controller.assignArtifactToWizard(wizard, artifact);
-            wizardData.setAll(controller.findAllWizards());
-            wizardTable.getSelectionModel().select(wizard);
+            if (artifact.getCondition() < 10) {
+                Alert alert = new Alert(Alert.AlertType.ERROR,
+                        "Condition < 10. Repair item first.",
+                        ButtonType.OK);
+                alert.setHeaderText("Cannot Assign Artifact");
+                alert.showAndWait();
+            } else {
+                controller.assignArtifactToWizard(wizard, artifact);
+                wizardData.setAll(controller.findAllWizards());
+                wizardTable.getSelectionModel().select(wizard);
+            }
         });
     }
+
 
     private void showViewWizardDialog(Wizard wizard) {
         if (wizard == null) return;

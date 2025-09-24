@@ -36,10 +36,22 @@ public class ArtifactController {
             throw new NoSuchElementException("Artifact with ID " + id + " not found.");
         }
         artifact.unassignOwner();
+        artifact.reduceConditionByFive();
         this.store.unassignArtifactFromWizard(artifact.getId());
     }
 
     public void deleteArtifact(int id) {
         this.store.deleteArtifactById(id);
     }
+
+    public void repairArtifactTo(int id, int repairAmount) {
+        Artifact artifact = this.store.findArtifactById(id);
+        if(artifact == null) {
+            throw new NoSuchElementException("Artifact with ID " + id + " not found.");
+        }
+        int newCondition = artifact.getCondition() + repairAmount;
+        artifact.setCondition(newCondition);
+    }
+
 }
+
