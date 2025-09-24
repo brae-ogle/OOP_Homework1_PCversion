@@ -85,19 +85,19 @@ public class ArtifactView extends VBox{
                 });
                 unassignButton.setOnAction(e -> {
                     Artifact artifact = getTableView().getItems().get(getIndex());
-                    //Confirmation unassignment
-                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirm.setTitle("Confirm Unassignment");
-                    confirm.setHeaderText("Unassign Artifact Owner");
-                    confirm.setContentText("Are you sure you want to unassign the owner of \"" + artifact.getName() + "\"?");
-                    confirm.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.OK) { //Proceed only if confirmed
-                            if (artifact.getOwner() != null) {
-                                controller.unassignArtifactOwner(artifact.getId());
-                                refreshArtifactView();
+                    if(!artifact.getOwner().getName().equals("--")){//Do nothing if already unassigned
+                        //Confirmation unassignment
+                        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                        confirm.setTitle("Confirm Unassignment");
+                        confirm.setHeaderText("Unassign Artifact Owner");
+                        confirm.setContentText("Are you sure you want to unassign the owner of \"" + artifact.getName() + "\"?");
+                        confirm.showAndWait().ifPresent(response -> {
+                            if (response == ButtonType.OK) { //Proceed only if confirmed
+                                    controller.unassignArtifactOwner(artifact.getId());
+                                    refreshArtifactView();
                             }
-                        }
-                    });
+                        });
+                    }
                 });
 
                 historyButton.setOnAction(e -> {
@@ -277,27 +277,11 @@ public class ArtifactView extends VBox{
 
         TableView<History> historyTable = new TableView<>(historyList);
 
-//        // Wizard column (resolve wizard name from DataStore if available)
-//        TableColumn<History, String> wizardCol = new TableColumn<>("Wizard");
-//        wizardCol.setCellValueFactory(c -> {
-//            int wizardId = c.getValue().getWizardId();
-//            String name = "";
-//            if (wizardId != 0) {
-//                var w = DataStore.getInstance().findWizardById(wizardId);
-//                if (w != null) name = w.getName();
-//            }
-//            return new ReadOnlyStringWrapper(name);
-//        });
         TableColumn<History, String> wizardCol = new TableColumn<>("Wizard");
         wizardCol.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(c.getValue().getWizardName())
         );
 
-//        // Action column (ASSIGNED / UNASSIGNED)
-//        TableColumn<History, String> actionCol = new TableColumn<>("Action");
-//        actionCol.setCellValueFactory(c ->
-//                new ReadOnlyStringWrapper(c.getValue().getActionType())
-//        );
 
         // Timestamp column
         TableColumn<History, String> timeCol = new TableColumn<>("Timestamp");

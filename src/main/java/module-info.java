@@ -7,4 +7,5 @@ module javafxapp {
     exports com.example.hogwarts.model;
     exports com.example.hogwarts.view;
     exports com.example.hogwarts.controller;
+    requires com.fasterxml.jackson.core; // Jackson core module
 }

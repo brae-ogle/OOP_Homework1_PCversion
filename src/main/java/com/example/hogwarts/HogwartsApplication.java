@@ -5,6 +5,7 @@ import com.example.hogwarts.view.LoginView;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import com.example.hogwarts.data.DataStore;
 
 public class HogwartsApplication extends Application {
 
@@ -17,6 +18,13 @@ public class HogwartsApplication extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Hogwarts Artifacts Management System");
         primaryStage.show();
+    }
+
+
+    @Override
+    public void stop() {
+        // Called automatically when the app closes
+        DataStore.getInstance().saveAll();  // save everything on exit
     }
 
     public static void main(String[] args) {

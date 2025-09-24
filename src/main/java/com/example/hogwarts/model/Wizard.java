@@ -30,7 +30,7 @@ public class Wizard {
 
         Wizard currentOwner = artifact.getOwner();
 
-        if (currentOwner != null) {
+        if (currentOwner != null){
             currentOwner.removeArtifact(artifact); // detach from previous owner
         }
 
