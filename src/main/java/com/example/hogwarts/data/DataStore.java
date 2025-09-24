@@ -91,8 +91,6 @@ public class DataStore {
     public Artifact addArtifact(Artifact artifact) {
         artifact.setId(artifactIdCounter.getAndIncrement());
         this.artifacts.put(artifact.getId(), artifact);
-        History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
-        this.addHistoryEntry(artifact.getId(), history);
         return artifact;
     }
 
