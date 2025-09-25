@@ -263,72 +263,79 @@ public class ArtifactView extends VBox{
         dialog.showAndWait();
     }
 
+    // Shows a dialog with the assignment history of a given artifact
     private void showArtifactHistoryDialog(Artifact artifact) {
-        if (artifact == null) return;
+        if (artifact == null) return; // safety check: if null, do nothing
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Artifact Assignment History");
         dialog.setHeaderText("History for: " + artifact.getName());
 
-        // Pull *all* history entries for this artifact
+        // Pull *all* history entries for this artifact from the DataStore
         ObservableList<History> historyList = FXCollections.observableArrayList(
                 DataStore.getInstance().getHistoryByArtifactId(artifact.getId())
         );
 
+        // Create a table to display history
         TableView<History> historyTable = new TableView<>(historyList);
 
+        // Wizard column → shows the wizard's name
         TableColumn<History, String> wizardCol = new TableColumn<>("Wizard");
         wizardCol.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(c.getValue().getWizardName())
         );
 
-
-        // Timestamp column
+        // Timestamp column → shows when the assignment/unassignment occurred
         TableColumn<History, String> timeCol = new TableColumn<>("Timestamp");
         timeCol.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(c.getValue().getTimestamp().toString())
         );
 
-        //historyTable.getColumns().addAll(wizardCol, actionCol, timeCol);
+        // Add columns to the table (wizard + timestamp)
         historyTable.getColumns().addAll(wizardCol, timeCol);
-        historyTable.setPrefHeight(300);
+        historyTable.setPrefHeight(300); // make the table taller so multiple rows fit
 
         VBox content = new VBox(historyTable);
         content.setPadding(new Insets(10));
 
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        // Show the dialog and wait for user to close
         dialog.showAndWait();
     }
 
+
+    // Shows a dialog that allows repairing an artifact’s condition
     private void showArtifactRepairDialog(Artifact artifact) {
-        if (artifact == null) return;
+        if (artifact == null) return; // safety check
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Repair Artifact");
         dialog.setHeaderText("Repairing: " + artifact.getName());
 
-        // Current condition display
+        // Label showing current condition of artifact (0-100)
         Label conditionLabel = new Label("Current Condition: " + artifact.getCondition() + " (0-100)");
 
-        // Warning if condition < 10
+        // Warning if condition is critically low (<10)
         Label warningLabel = new Label();
         if (artifact.getCondition() < 10) {
             warningLabel.setText("⚠ Warning: Artifact condition is critically low!");
             warningLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
         }
 
-        // New condition input
+        // Input field for entering new condition (0-100)
         TextField newConditionField = new TextField();
         newConditionField.setPromptText("Enter new condition (0-100)");
 
-        // Restrict to integers only
+        // Restrict input to only digits (prevents letters/spaces)
         newConditionField.textProperty().addListener((obs, oldVal, newVal) -> {
             if (!newVal.matches("\\d*")) {
                 newConditionField.setText(newVal.replaceAll("[^\\d]", ""));
             }
         });
 
+        // VBox layout for dialog content
         VBox content = new VBox(10,
                 conditionLabel,
                 warningLabel,
@@ -339,23 +346,27 @@ public class ArtifactView extends VBox{
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
+        // Handle result when user presses OK
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
                 String newConditionText = newConditionField.getText();
+
                 if (!newConditionText.isEmpty()) {
                     int newCondition = Integer.parseInt(newConditionText);
+
+                    // Validate condition range
                     if (newCondition < 0 || newCondition > 100) {
                         Alert alert = new Alert(Alert.AlertType.ERROR,
                                 "Condition must be between 0 and 100.",
                                 ButtonType.OK);
                         alert.showAndWait();
                     } else {
+                        // Apply the repair: difference between new and current condition
                         controller.repairArtifactTo(artifact.getId(), newCondition - artifact.getCondition());
-
                     }
                 }
             }
-            return null;
+            return null; // dialog closes after handling
         });
         dialog.showAndWait();
         refreshArtifactView();

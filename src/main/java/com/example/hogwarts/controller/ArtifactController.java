@@ -2,10 +2,6 @@ package com.example.hogwarts.controller;
 
 import com.example.hogwarts.data.DataStore;
 import com.example.hogwarts.model.Artifact;
-import com.example.hogwarts.model.Wizard;
-import com.example.hogwarts.model.History;
-import java.util.Date;
-
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
@@ -50,6 +46,7 @@ public class ArtifactController {
             throw new NoSuchElementException("Artifact with ID " + id + " not found.");
         }
         int newCondition = artifact.getCondition() + repairAmount;
+        //Set condition bounds between 0 and 100
         artifact.setCondition(newCondition);
     }
 

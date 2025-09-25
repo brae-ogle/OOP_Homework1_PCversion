@@ -28,9 +28,6 @@ public class WizardController {
             throw new IllegalArgumentException("Wizard with ID " + id + " not found.");
         }
         wizard.setName(newName);
-        //>?>?>?>?>?>?>
-        // Do i  need to add history for wizard name change?
-        //>?>?>?>?>?>?>
     }
 
     public void deleteWizard(int id) {

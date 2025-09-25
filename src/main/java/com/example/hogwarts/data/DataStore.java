@@ -1,7 +1,6 @@
 package com.example.hogwarts.data;
 
 import com.example.hogwarts.model.*;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -39,26 +38,9 @@ public class DataStore {
     private static final String ARTIFACTS_FILE = DATA_DIR + "/artifacts.json";
     private static final String TRANSFERS_FILE = DATA_DIR + "/transfers.json";
 
-//    private DataStore() {
-//        // Hardcoded users
-//        this.users.add(new User("admin", "123", Role.ADMIN));
-//        this.users.add(new User("user", "123", Role.USER));
-//
-//        // Sample data
-//        Wizard w1 = new Wizard("Harry Potter");
-//        Wizard w2 = new Wizard("Hermione Granger");
-//        this.addWizard(w1);
-//        this.addWizard(w2);
-//
-//        Artifact a1 = new Artifact("Invisibility Cloak", "A magical cloak that makes the wearer invisible.");
-//        Artifact a2 = new Artifact("Time-Turner", "A device used for time travel.");
-//        this.addArtifact(a1);
-//        this.addArtifact(a2);
-//
-//        this.assignArtifactToWizard(a1.getId(), w1.getId());
-//        this.assignArtifactToWizard(a2.getId(), w2.getId());
-//    }
+
 private DataStore() {
+    // Seed default users always
     this.users.add(new User("admin", "123", Role.ADMIN));
     this.users.add(new User("user", "123", Role.USER));
     File dir = new File(DATA_DIR);
@@ -76,16 +58,11 @@ private DataStore() {
         }
     } catch (IOException e) {
         e.printStackTrace();
-        //System.out.println("Here 2");
-        //seedDefaults(); // fallback if something breaks
-
     }
 }
 
     private void seedDefaults() {
-//        this.users.add(new User("admin", "123", Role.ADMIN));
-//        this.users.add(new User("user", "123", Role.USER));
-
+        //Default Wizards and Artifacts
         Wizard w1 = this.addWizard(new Wizard("Harry Potter"));
         Wizard w2 = this.addWizard(new Wizard("Hermione Granger"));
 
@@ -179,6 +156,7 @@ private DataStore() {
         if (artifact == null || artifact.getOwner() == null) return false;
         Wizard owner = artifact.getOwner();
         owner.removeArtifact(artifact);
+        // Log the unassignment
         History history = new History(artifact.getId(), artifact.getName(), "--", new Date());
         this.addHistoryEntry(artifact.getId(), history);
         return true;
@@ -261,7 +239,8 @@ private DataStore() {
                     gen.writeNumberField("artifactId", h.getArtifactId());
                     gen.writeStringField("artifactName", h.getArtifactName());
                     gen.writeStringField("wizardName", h.getWizardName());
-                    gen.writeStringField("timestamp", h.getTimestamp().toString());
+                    //gen.writeStringField("timestamp", h.getTimestamp().toString());
+                    gen.writeNumberField("timestamp", h.getTimestamp().getTime());
                     gen.writeEndObject();
                 }
             }

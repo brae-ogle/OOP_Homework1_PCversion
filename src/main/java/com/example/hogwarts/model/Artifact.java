@@ -39,6 +39,7 @@ public class Artifact {
     }
     public int getCondition() { return condition; }
     public void setCondition(int condition) {
+        //Used for repairing artifacts
         //Bound condition between 0 and 100
         if (condition < 0) {
             this.condition = 0;
@@ -49,6 +50,7 @@ public class Artifact {
         }
     }
     public void reduceConditionByFive() {
+        //Used when artifact is assigned to a wizard or unassigned
         int newCondition = this.getCondition() - 5;
         this.setCondition(newCondition);
     }
